@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
+<policyconfig>
+<action id="org.pop.support.generate-logs">
+  <message>Requesting permission to generate system logs.</message>
+  <icon_name>pop-os</icon_name>
+  <defaults>
+    <allow_any>auth_admin</allow_any>
+    <allow_inactive>auth_admin</allow_inactive>
+    <allow_active>auth_admin</allow_active>
+  </defaults>
+  <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/pop-support</annotate>
+</action>
+</policyconfig>

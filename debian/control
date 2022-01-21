@@ -1,0 +1,28 @@
+Source: pop-support-panel
+Section: admin
+Priority: optional
+Maintainer: System76 <info@system76.com>
+Build-Depends:
+  debhelper (>=9),
+  cargo,
+  rustc,
+  libgtk-3-dev,
+  pkg-config,
+Standards-Version: 4.3.0
+Homepage: https://github.com/pop-os/pop-support-panel
+
+Package: libpop-support-panel
+Architecture: amd64 arm64
+Depends:
+  ${misc:Depends},
+  ${shlibs:Depends}
+Description: Pop desktop settings widget library
+ Shared library for C which provides the Pop!_OS support panel as a GTK widget.
+
+Package: libpop-support-panel-dev
+Architecture: all
+Depends:
+  libpop-support-panel (= ${binary:Version}),
+  ${misc:Depends}
+Description: Pop support panel library header
+ The C header required to link to the Pop!_OS support panel library.

@@ -1,0 +1,22 @@
+[package]
+name = "ffi"
+version = "1.0.0"
+edition = "2018"
+license = "MPL-2.0"
+
+[lib]
+name = "pop_support"
+crate-type = [ "cdylib"]
+
+[build-dependencies]
+cdylib-link-lines = "0.1"
+
+[dependencies]
+glib = "0.14"
+gtk = "0.14"
+gtk-sys = "0.14"
+libc = "0.2.112"
+relm = "0.22.0"
+
+[dependencies.pop-support]
+path = "../"

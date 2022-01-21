@@ -1,0 +1,4 @@
+usr/bin/pop-support
+usr/lib/libpop_support.so
+usr/lib/pkgconfig/pop_support.pc
+usr/share/polkit-1/actions/org.pop.support.policy
