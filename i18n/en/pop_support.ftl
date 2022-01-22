@@ -1,0 +1,17 @@
+create-logs = Create Log Archives for Support
+create-logs-button = {log-dialog}
+dialog-close = Close
+dialog-show-in-folder = Show in Folder
+documentation = Documentation
+documentation-button = Browse
+log-dialog = Create Log Files
+log-dialog-creating = Creating Files...
+log-dialog-finished = A log archive ({$archive}) was created.
+model-and-version = Model and Version
+os-version = Operating System and Version
+serial-number = Serial Number
+support-community = Community Support in Pop!_OS Chat
+support-community-button = Join
+support-professional = Professional Support
+support-professional-button = Create a ticket
+unknown = Unknown

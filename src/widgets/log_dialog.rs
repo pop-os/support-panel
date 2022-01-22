@@ -1,6 +1,7 @@
 // Copyright 2022 System76 <info@system76.com>
 // SPDX-License-Identifier: MPL-2.0
 
+use crate::fl;
 use gtk::prelude::*;
 use relm::Relm;
 
@@ -34,7 +35,7 @@ impl relm::Widget for LogDialog {
         match event {
             LogEvent::GeneratedLogs(result) => {
                 if let Ok(archive) = result {
-                    let message = format!("A log archive ({archive}) was created.");
+                    let message = fl!("log-dialog-finished", archive = archive.clone());
 
                     self.widgets.description.set_text(&message);
 
@@ -71,14 +72,14 @@ impl relm::Widget for LogDialog {
 
             #[name="header"]
             gtk::Label {
-                label: "<b>Create Log Files</b>",
+                label: &format!("<b>{}</b>", fl!("log-dialog")),
                 halign: gtk::Align::Center,
                 use_markup: true,
             },
 
             #[name="description"]
             gtk::Label {
-                label: "Creating Files...",
+                label: &fl!("log-dialog-creating"),
                 halign: gtk::Align::Center,
                 line_wrap: true,
             },
@@ -93,7 +94,7 @@ impl relm::Widget for LogDialog {
                 #[name="close_button"]
                 gtk::Button {
                     gtk::Label {
-                        label: "Close",
+                        label: &fl!("dialog-close"),
                         margin_top: 8,
                         margin_bottom: 8,
                     },
@@ -104,7 +105,7 @@ impl relm::Widget for LogDialog {
                 #[name="show_folder_button"]
                 gtk::Button {
                     gtk::Label {
-                        label: "Show in Folder",
+                        label: &fl!("dialog-show-in-folder"),
                         margin_top: 8,
                         margin_bottom: 8,
                     },

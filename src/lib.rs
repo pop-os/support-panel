@@ -8,6 +8,7 @@ pub mod gresource;
 pub mod system76;
 pub mod widgets;
 
+mod localize;
 mod vendor;
 
 pub use self::vendor::Vendor;
@@ -15,7 +16,17 @@ pub use self::vendor::Vendor;
 use self::widgets::*;
 use anyhow::Context;
 use gtk::prelude::*;
+use i18n_embed::DesktopLanguageRequester;
 use relm::{Relm, Widget};
+
+pub fn localize() {
+    let localizer = localize::localizer();
+    let requested_languages = DesktopLanguageRequester::requested_languages();
+
+    if let Err(error) = localizer.select(&requested_languages) {
+        eprintln!("{} failed to load langauge: {}", file!(), error);
+    }
+}
 
 #[derive(Debug, relm_derive::Msg)]
 pub enum SupportEvent {
@@ -86,7 +97,7 @@ impl Widget for SupportPanel {
                 read_to_string("/etc/os-release"),
             );
 
-            let mut model_and_version = String::from("Unknown");
+            let mut model_and_version = fl!("unknown");
 
             let mut vendor = None;
 
@@ -107,7 +118,7 @@ impl Widget for SupportPanel {
                 }
             }
 
-            let mut operating_system = String::from("Unknown");
+            let mut operating_system = fl!("unknown");
 
             if let Ok(os_release) = os_release {
                 for line in os_release.lines() {
@@ -130,7 +141,7 @@ impl Widget for SupportPanel {
             stream.emit(SupportEvent::UpdateInfo(SupportInfo {
                 vendor,
                 model_and_version,
-                serial_number: "Unknown".into(),
+                serial_number: fl!("unknown"),
                 operating_system,
             }));
         });
@@ -249,54 +260,54 @@ impl Widget for SupportPanel {
             #[name="settings_box"]
             gtk::ListBox {
                 #[name="model_info"]
-                InfoLabel("Model and Version".to_owned()),
+                InfoLabel(fl!("model-and-version")),
 
                 #[name="serial_info"]
-                InfoLabel("Serial Number".to_owned()),
+                InfoLabel(fl!("serial-number")),
 
                 #[name="os_info"]
-                InfoLabel("Operating System and Version".to_owned()),
+                InfoLabel(fl!("os-version")),
 
                 #[name="box4"]
                 InfoBox {
-                    Description("Documentation".into()),
+                    Description(fl!("documentation")),
 
                     #[name="button1"]
                     gtk::Button {
-                        label: "Browse",
+                        label: &fl!("documentation-button"),
                         clicked => SupportEvent::BrowseDocumentation,
                     }
                 },
 
                 #[name="box5"]
                 InfoBox {
-                    Description("Community Support in Pop!_OS Chat".into()),
+                    Description(fl!("support-community")),
 
                     #[name="button2"]
                     gtk::Button {
-                        label: "Join",
+                        label: &fl!("support-community-button"),
                         clicked => SupportEvent::CommunitySupport,
                     }
                 },
 
                 #[name="box6"]
                 InfoBox {
-                    Description("Professional Support".into()),
+                    Description(fl!("support-professional")),
 
                     #[name="button3"]
                     gtk::Button {
-                        label: "Create a ticket",
+                        label: &fl!("support-professional-button"),
                         clicked => SupportEvent::CreateSupportTicket,
                     }
                 },
 
                 #[name="box7"]
                 InfoBox {
-                    Description("Create Log Archives for Support".into()),
+                    Description(fl!("create-logs")),
 
                     #[name="button4"]
                     gtk::Button {
-                        label: "Create Log Files",
+                        label: &fl!("create-logs-button"),
                         clicked => SupportEvent::CreateLogFiles,
                     }
                 },
