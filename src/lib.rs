@@ -13,12 +13,12 @@ mod vendor;
 
 pub use self::vendor::Vendor;
 
+use self::widgets::*;
 use anyhow::Context;
 use concat_in_place::strcat;
 use gtk::prelude::*;
 use i18n_embed::DesktopLanguageRequester;
 use relm::{Relm, Widget};
-use self::widgets::*;
 
 pub fn localize() {
     let localizer = localize::localizer();
@@ -98,7 +98,7 @@ impl Widget for SupportPanel {
                 read_to_string("/etc/os-release"),
             );
 
-            let mut model_and_version = fl!("unknown");
+            let mut model_and_version = String::new();
 
             let mut vendor = None;
 
@@ -117,7 +117,7 @@ impl Widget for SupportPanel {
                 }
             }
 
-            let mut operating_system = fl!("unknown");
+            let mut operating_system = String::new();
 
             if let Ok(os_release) = os_release {
                 for line in os_release.lines() {
@@ -135,6 +135,14 @@ impl Widget for SupportPanel {
                         break;
                     }
                 }
+            }
+
+            if model_and_version.is_empty() {
+                model_and_version = fl!("unknown")
+            }
+
+            if operating_system.is_empty() {
+                operating_system = fl!("unknown");
             }
 
             stream.emit(SupportEvent::UpdateInfo(SupportInfo {
