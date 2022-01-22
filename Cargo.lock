@@ -277,6 +277,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "concat-in-place"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "184cbd788b9b2677636091543da73a56d63597985c78b48da833ace7515ca305"
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1109,6 +1115,7 @@ dependencies = [
  "async-process",
  "cascade",
  "clap",
+ "concat-in-place",
  "futures",
  "gdk-pixbuf",
  "gio",

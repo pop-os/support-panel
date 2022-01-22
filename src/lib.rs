@@ -13,11 +13,12 @@ mod vendor;
 
 pub use self::vendor::Vendor;
 
-use self::widgets::*;
 use anyhow::Context;
+use concat_in_place::strcat;
 use gtk::prelude::*;
 use i18n_embed::DesktopLanguageRequester;
 use relm::{Relm, Widget};
+use self::widgets::*;
 
 pub fn localize() {
     let localizer = localize::localizer();
@@ -108,13 +109,11 @@ impl Widget for SupportPanel {
                 model_and_version.push_str(sys_vendor.trim());
 
                 if let Ok(name) = product_name {
-                    model_and_version.push(' ');
-                    model_and_version.push_str(name.trim());
+                    strcat!(&mut model_and_version, " " name.trim());
                 }
 
                 if let Ok(version) = version {
-                    model_and_version.push(' ');
-                    model_and_version.push_str(version.trim());
+                    strcat!(&mut model_and_version, " (" version.trim() ")");
                 }
             }
 
