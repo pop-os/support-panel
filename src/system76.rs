@@ -19,7 +19,7 @@ pub async fn generate_logs() -> anyhow::Result<&'static str> {
 
     let _ = std::fs::create_dir_all("/tmp/pop-support/");
 
-    futures::try_join!(
+    let _ = futures::join!(
         dmidecode(tempfile(temppath, "dmidecode")?),
         lspci(tempfile(temppath, "lspci")?),
         lsusb(tempfile(temppath, "lsusb")?),
@@ -29,24 +29,24 @@ pub async fn generate_logs() -> anyhow::Result<&'static str> {
         copy(Path::new("/var/log/apt/history.log"), apt_history),
         copy(Path::new("/var/log/Xorg.0.log"), xorg_log),
         copy(Path::new("/var/log/syslog"), syslog),
-    )?;
+    );
+
+    let files_to_collect: Vec<String> = std::fs::read_dir(temppath)
+        .map(|dir| {
+            dir.filter_map(Result::ok)
+                .filter_map(|entry| Some(entry.file_name().to_str()?.to_owned()))
+                .collect::<Vec<String>>()
+        })
+        .unwrap_or_default();
+
+    eprintln!("logs generated: {:?}", files_to_collect);
 
     Command::new("tar")
         .arg("-C")
         .arg(temppath)
         .arg("-Jpcf")
         .arg(LOG_PATH)
-        .args(&[
-            "apt_history",
-            "dmesg",
-            "dmidecode",
-            "journalctl",
-            "lspci",
-            "lsusb",
-            "syslog",
-            "upower",
-            "Xorg.0.log",
-        ])
+        .args(&files_to_collect)
         .status()
         .await
         .and_then(IntoResult::into_result)
