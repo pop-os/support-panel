@@ -255,69 +255,75 @@ impl Widget for SupportPanel {
     }
 
     relm::view! {
-        gtk::Box {
-            orientation: gtk::Orientation::Vertical,
+        gtk::ScrolledWindow {
+            hscrollbar_policy: gtk::PolicyType::Never,
 
-            #[name="support_logo"]
-            gtk::Image {
-                margin_top: 48,
-                margin_bottom: 48
-            },
+            gtk::Box {
+                halign: gtk::Align::Center,
+                width_request: 600,
+                orientation: gtk::Orientation::Vertical,
 
-            #[name="settings_box"]
-            gtk::ListBox {
-                #[name="model_info"]
-                InfoLabel(fl!("model-and-version")),
-
-                #[name="serial_info"]
-                InfoLabel(fl!("serial-number")),
-
-                #[name="os_info"]
-                InfoLabel(fl!("os-version")),
-
-                #[name="box4"]
-                InfoBox {
-                    Description(fl!("documentation")),
-
-                    #[name="button1"]
-                    gtk::Button {
-                        label: &fl!("documentation-button"),
-                        clicked => SupportEvent::BrowseDocumentation,
-                    }
+                #[name="support_logo"]
+                gtk::Image {
+                    margin_top: 48,
+                    margin_bottom: 48
                 },
 
-                #[name="box5"]
-                InfoBox {
-                    Description(fl!("support-community")),
+                #[name="settings_box"]
+                gtk::ListBox {
+                    #[name="model_info"]
+                    InfoLabel(fl!("model-and-version")),
 
-                    #[name="button2"]
-                    gtk::Button {
-                        label: &fl!("support-community-button"),
-                        clicked => SupportEvent::CommunitySupport,
-                    }
-                },
+                    #[name="serial_info"]
+                    InfoLabel(fl!("serial-number")),
 
-                #[name="box6"]
-                InfoBox {
-                    Description(fl!("support-professional")),
+                    #[name="os_info"]
+                    InfoLabel(fl!("os-version")),
 
-                    #[name="button3"]
-                    gtk::Button {
-                        label: &fl!("support-professional-button"),
-                        clicked => SupportEvent::CreateSupportTicket,
-                    }
-                },
+                    #[name="box4"]
+                    InfoBox {
+                        Description(fl!("documentation")),
 
-                #[name="box7"]
-                InfoBox {
-                    Description(fl!("create-logs")),
+                        #[name="button1"]
+                        gtk::Button {
+                            label: &fl!("documentation-button"),
+                            clicked => SupportEvent::BrowseDocumentation,
+                        }
+                    },
 
-                    #[name="button4"]
-                    gtk::Button {
-                        label: &fl!("create-logs-button"),
-                        clicked => SupportEvent::CreateLogFiles,
-                    }
-                },
+                    #[name="box5"]
+                    InfoBox {
+                        Description(fl!("support-community")),
+
+                        #[name="button2"]
+                        gtk::Button {
+                            label: &fl!("support-community-button"),
+                            clicked => SupportEvent::CommunitySupport,
+                        }
+                    },
+
+                    #[name="box6"]
+                    InfoBox {
+                        Description(fl!("support-professional")),
+
+                        #[name="button3"]
+                        gtk::Button {
+                            label: &fl!("support-professional-button"),
+                            clicked => SupportEvent::CreateSupportTicket,
+                        }
+                    },
+
+                    #[name="box7"]
+                    InfoBox {
+                        Description(fl!("create-logs")),
+
+                        #[name="button4"]
+                        gtk::Button {
+                            label: &fl!("create-logs-button"),
+                            clicked => SupportEvent::CreateLogFiles,
+                        }
+                    },
+                }
             }
         }
     }
