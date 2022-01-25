@@ -279,9 +279,12 @@ impl Widget for SupportPanel {
 }
 
 pub fn generate_logs_subprocess() -> anyhow::Result<String> {
+    let home_dir = dirs::home_dir().context("no home directory")?;
+
     std::process::Command::new("pkexec")
         .arg("pop-support")
         .arg("generate-logs")
+        .arg(home_dir)
         .output()
         .context("failed to start command to generate logs")
         .and_then(|output| {

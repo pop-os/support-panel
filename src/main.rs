@@ -14,8 +14,13 @@ struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 enum Action {
-    GenerateLogs,
-    // Gtk,
+    GenerateLogs(LogAction),
+    Gtk,
+}
+
+#[derive(Debug, Parser)]
+pub struct LogAction {
+    pub path: String,
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -23,15 +28,15 @@ async fn main() {
     let args = Args::parse();
 
     if let Err(why) = match args.action {
-        Action::GenerateLogs => generate_logs().await,
-        // Action::Gtk => gtk(),
+        Action::GenerateLogs(action) => generate_logs(&action.path).await,
+        Action::Gtk => gtk(),
     } {
         eprintln!("{:?}", why);
         std::process::exit(1);
     }
 }
 
-async fn generate_logs() -> anyhow::Result<()> {
+async fn generate_logs(path: &str) -> anyhow::Result<()> {
     use pop_support::{system76, Vendor};
 
     let sys_vendor = std::fs::read_to_string("/sys/devices/virtual/dmi/id/sys_vendor")
@@ -40,7 +45,7 @@ async fn generate_logs() -> anyhow::Result<()> {
     #[allow(clippy::single_match)]
     match Vendor::guess_from(sys_vendor.trim()) {
         Some(Vendor::System76) => {
-            let path = system76::generate_logs().await?;
+            let path = system76::generate_logs(path).await?;
             println!("PATH {path}");
         }
 

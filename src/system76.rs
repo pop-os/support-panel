@@ -8,12 +8,8 @@ use std::{fs::File, path::Path, process::Stdio};
 use tokio::fs::File as AsyncFile;
 use tokio::process::Command;
 
-pub async fn generate_logs() -> anyhow::Result<&'static str> {
+pub async fn generate_logs(home: &str) -> anyhow::Result<String> {
     let tempdir = tempfile::tempdir().context("failed to fetch temporary directory")?;
-
-    const LOG_PATH: &str = "/tmp/pop-support/system76-logs.tar.xz";
-
-    let _ = std::fs::create_dir_all("/tmp/pop-support/");
 
     async fn system_info(file: File) -> anyhow::Result<()> {
         use tokio::io::AsyncWriteExt;
@@ -58,7 +54,7 @@ pub async fn generate_logs() -> anyhow::Result<&'static str> {
         copy(temp, "/var/log/apt/term.log.1.gz", "apt/term-rotated.log"),
         copy(temp, "/var/log/syslog", "syslog.log"),
         copy(temp, "/var/log/Xorg.0.log", "Xorg.0.log"),
-        system_info(tempfile(temp, "systeminfo")?),
+        system_info(tempfile(temp, "systeminfo.txt")?),
     );
 
     let files_to_collect: Vec<String> = std::fs::read_dir(temp)
@@ -71,18 +67,25 @@ pub async fn generate_logs() -> anyhow::Result<&'static str> {
 
     eprintln!("logs generated: {:?}", files_to_collect);
 
+    let time = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    let log_path = format!("{home}/pop-support_{:?}.tar.xz", time);
+
     Command::new("tar")
         .arg("-C")
         .arg(temp)
         .arg("-Jpcf")
-        .arg(LOG_PATH)
+        .arg(&log_path)
         .args(&files_to_collect)
         .status()
         .await
         .and_then(IntoResult::into_result)
         .context("tar exited in failure")?;
 
-    Ok(LOG_PATH)
+    Ok(log_path)
 }
 
 async fn command(command: &str, args: &[&str], temp: &Path) -> anyhow::Result<()> {
