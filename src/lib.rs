@@ -5,6 +5,7 @@
 extern crate cascade;
 
 pub mod gresource;
+pub mod support_info;
 pub mod system76;
 pub mod widgets;
 
@@ -13,6 +14,7 @@ mod vendor;
 
 pub use self::vendor::Vendor;
 
+use self::support_info::SupportInfo;
 use self::widgets::*;
 use anyhow::Context;
 use concat_in_place::strcat;
@@ -42,14 +44,6 @@ pub struct SupportModel {
     vendor: Option<Vendor>,
     window: gtk::Window,
     log_dialog: Option<relm::Component<LogDialog>>,
-}
-
-#[derive(Debug, Default)]
-pub struct SupportInfo {
-    vendor: Option<Vendor>,
-    model_and_version: String,
-    serial_number: String,
-    operating_system: String,
 }
 
 #[relm_derive::widget]
@@ -89,68 +83,23 @@ impl Widget for SupportPanel {
         let stream = relm.stream().clone();
 
         glib::MainContext::default().spawn_local(async move {
-            use async_fs::read_to_string;
+            use tokio::fs::read_to_string;
 
-            let (sys_vendor, version, product_name, os_release) = futures::join!(
-                read_to_string("/sys/devices/virtual/dmi/id/sys_vendor"),
-                read_to_string("/sys/devices/virtual/dmi/id/product_version"),
-                read_to_string("/sys/devices/virtual/dmi/id/product_name"),
-                read_to_string("/etc/os-release"),
-            );
+            let mut info = SupportInfo::fetch().await;
 
-            let mut model_and_version = String::new();
-
-            let mut vendor = None;
-
-            if let Ok(sys_vendor) = sys_vendor {
-                vendor = Vendor::guess_from(sys_vendor.trim());
-
-                model_and_version.clear();
-                model_and_version.push_str(sys_vendor.trim());
-
-                if let Ok(name) = product_name {
-                    strcat!(&mut model_and_version, " " name.trim());
-                }
-
-                if let Ok(version) = version {
-                    strcat!(&mut model_and_version, " (" version.trim() ")");
-                }
+            if info.model_and_version.is_empty() {
+                info.model_and_version = fl!("unknown")
             }
 
-            let mut operating_system = String::new();
-
-            if let Ok(os_release) = os_release {
-                for line in os_release.lines() {
-                    if let Some(mut value) = line.strip_prefix("PRETTY_NAME=") {
-                        if let Some(v) = value.strip_prefix('"') {
-                            value = v;
-                        }
-
-                        if let Some(v) = value.strip_suffix('"') {
-                            value = v;
-                        }
-
-                        operating_system.clear();
-                        operating_system.push_str(value.trim());
-                        break;
-                    }
-                }
+            if info.operating_system.is_empty() {
+                info.operating_system = fl!("unknown");
             }
 
-            if model_and_version.is_empty() {
-                model_and_version = fl!("unknown")
+            if info.serial_number.is_empty() {
+                info.serial_number = fl!("unknown");
             }
 
-            if operating_system.is_empty() {
-                operating_system = fl!("unknown");
-            }
-
-            stream.emit(SupportEvent::UpdateInfo(SupportInfo {
-                vendor,
-                model_and_version,
-                serial_number: fl!("unknown"),
-                operating_system,
-            }));
+            stream.emit(SupportEvent::UpdateInfo(info));
         });
 
         SupportModel {

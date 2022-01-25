@@ -38,7 +38,7 @@ bin: Cargo.toml Cargo.lock src/lib.rs extract-vendor
 ffi: Cargo.toml Cargo.lock ffi/src/lib.rs extract-vendor
 	cargo build $(ARGS) --manifest-path ffi/Cargo.toml
 
-pkgconfig: $(FFI) tools/src/pkgconfig.rs
+pkgconfig: ffi tools/src/pkgconfig.rs
 	cargo run -p tools --bin pkgconfig -- $(PACKAGE) $(libdir) $(includedir)
 
 clean:

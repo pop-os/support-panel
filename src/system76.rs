@@ -3,35 +3,65 @@
 
 use anyhow::Context;
 use as_result::IntoResult;
-use async_fs::File as AsyncFile;
-use async_process::{Command, Stdio};
-use std::{fs::File, path::Path};
+use std::ffi::OsStr;
+use std::{fs::File, path::Path, process::Stdio};
+use tokio::fs::File as AsyncFile;
+use tokio::process::Command;
 
 pub async fn generate_logs() -> anyhow::Result<&'static str> {
     let tempdir = tempfile::tempdir().context("failed to fetch temporary directory")?;
-    let temppath = tempdir.path();
-
-    let apt_history = &temppath.join("apt_history");
-    let xorg_log = &temppath.join("Xorg.0.log");
-    let syslog = &temppath.join("syslog");
 
     const LOG_PATH: &str = "/tmp/pop-support/system76-logs.tar.xz";
 
     let _ = std::fs::create_dir_all("/tmp/pop-support/");
 
+    async fn system_info(file: File) -> anyhow::Result<()> {
+        use tokio::io::AsyncWriteExt;
+
+        let info = crate::support_info::SupportInfo::fetch().await;
+
+        let data = fomat_macros::fomat! {
+            "System76 Model: " (info.model_and_version) "\n"
+            "OS Version: " (info.operating_system) "\n"
+            "Kernel Version: " (info.kernel) "\n"
+        };
+
+        AsyncFile::from(file)
+            .write_all(data.as_bytes())
+            .await
+            .context("failed to write system info")
+    }
+
+    let temp = tempdir.path();
+
     let _ = futures::join!(
-        dmidecode(tempfile(temppath, "dmidecode")?),
-        lspci(tempfile(temppath, "lspci")?),
-        lsusb(tempfile(temppath, "lsusb")?),
-        dmesg(tempfile(temppath, "dmesg")?),
-        journalctl(tempfile(temppath, "journalctl")?),
-        upower(tempfile(temppath, "upower")?),
-        copy(Path::new("/var/log/apt/history.log"), apt_history),
-        copy(Path::new("/var/log/Xorg.0.log"), xorg_log),
-        copy(Path::new("/var/log/syslog"), syslog),
+        command("df", &["-h"], temp),
+        command("dmesg", &[], temp),
+        command("dmidecode", &[], temp),
+        command("journalctl", &["--since", "yesterday"], temp),
+        command("lsblk", &["-f"], temp),
+        command("lspci", &["-vv"], temp),
+        command("lsusb", &["-vv"], temp),
+        command("sensors", &[], temp),
+        command("upower", &["-d"], temp),
+        command("uptime", &[], temp),
+        copy(temp, "/etc/apt/sources.list.d", "apt/sources.list.d"),
+        copy(temp, "/etc/apt/sources.list", "apt/sources.list"),
+        copy(temp, "/etc/fstab", "fstab"),
+        copy(temp, "/var/log/apt/history.log", "apt/history.log"),
+        copy(
+            temp,
+            "/var/log/apt/history.log.1.gz",
+            "apt/history-rotated.log"
+        ),
+        copy(temp, "/var/log/apt/term.log", "apt/term.log"),
+        copy(temp, "/var/log/apt/term.log.1.gz", "apt/term-rotated.log"),
+        copy(temp, "/var/log/syslog", "syslog.log"),
+        copy(temp, "/var/log/Xorg.0.log", "Xorg.0.log"),
+        system_info(tempfile(temp, "systeminfo")?),
     );
 
-    let files_to_collect: Vec<String> = std::fs::read_dir(temppath)
+    let files_to_collect: Vec<String> = std::fs::read_dir(temp)
         .map(|dir| {
             dir.filter_map(Result::ok)
                 .filter_map(|entry| Some(entry.file_name().to_str()?.to_owned()))
@@ -43,7 +73,7 @@ pub async fn generate_logs() -> anyhow::Result<&'static str> {
 
     Command::new("tar")
         .arg("-C")
-        .arg(temppath)
+        .arg(temp)
         .arg("-Jpcf")
         .arg(LOG_PATH)
         .args(&files_to_collect)
@@ -55,62 +85,74 @@ pub async fn generate_logs() -> anyhow::Result<&'static str> {
     Ok(LOG_PATH)
 }
 
-async fn command(command: &str, args: &[&str], output: File) -> anyhow::Result<()> {
-    eprintln!("fetching output from `{} {}`", command, args.join(" "));
+async fn command(command: &str, args: &[&str], temp: &Path) -> anyhow::Result<()> {
+    eprintln!("fetching output from `{command}`");
     Command::new(command)
         .args(args)
         .stdin(Stdio::null())
         .stderr(Stdio::null())
-        .stdout(output)
+        .stdout(tempfile(temp, command)?)
         .status()
         .await
         .and_then(IntoResult::into_result)
         .with_context(|| format!("{} exited in failure", command))
 }
 
-async fn copy(source: &Path, dest: &Path) -> anyhow::Result<()> {
+async fn copy<D: AsRef<OsStr>, S: AsRef<OsStr>>(
+    tmp: &Path,
+    source: S,
+    name: D,
+) -> anyhow::Result<()> {
+    let source = Path::new(source.as_ref());
     eprintln!("copying logs from {}", source.display());
-    let source = async move {
-        AsyncFile::open(source)
+
+    let dest = tmp.join(name.as_ref());
+
+    if let Some(parent) = dest.parent() {
+        let _ = tokio::fs::create_dir_all(&parent).await;
+    }
+
+    if source.is_file() {
+        let source = async move {
+            AsyncFile::open(source)
+                .await
+                .context("failed to open source")
+        };
+
+        let dest = async move {
+            AsyncFile::create(&dest)
+                .await
+                .context("failed to create dest")
+        };
+
+        let (mut source, mut dest) = futures::try_join!(source, dest)?;
+        tokio::io::copy(&mut source, &mut dest)
             .await
-            .context("failed to open source")
-    };
+            .context("failed to copy")
+            .map(|_| ())
+    } else {
+        if let Ok(repos) = std::fs::read_dir(source) {
+            let mut tasks = Vec::new();
 
-    let dest = async move {
-        AsyncFile::create(dest)
-            .await
-            .context("failed to create dest")
-    };
+            for entry in repos.filter_map(Result::ok) {
+                if entry.metadata().map_or(false, |m| m.is_file()) {
+                    let src = entry.path();
+                    if src.is_file() {
+                        let name = entry.file_name().to_owned();
+                        tasks.push(async {
+                            let name = name;
+                            let src = src;
+                            copy(&src, &dest, &name).await
+                        });
+                    }
+                }
+            }
 
-    let (mut source, mut dest) = futures::try_join!(source, dest)?;
-    futures::io::copy(&mut source, &mut dest)
-        .await
-        .context("failed to copy")
-        .map(|_| ())
-}
+            let _ = futures::future::join_all(tasks);
+        }
 
-async fn dmesg(file: File) -> anyhow::Result<()> {
-    command("dmesg", &[], file).await
-}
-
-async fn dmidecode(file: File) -> anyhow::Result<()> {
-    command("dmidecode", &[], file).await
-}
-
-async fn journalctl(file: File) -> anyhow::Result<()> {
-    command("journalctl", &["--since", "yesterday"], file).await
-}
-
-async fn lspci(file: File) -> anyhow::Result<()> {
-    command("lspci", &["-vv"], file).await
-}
-
-async fn lsusb(file: File) -> anyhow::Result<()> {
-    command("lsusb", &["-vv"], file).await
-}
-
-async fn upower(file: File) -> anyhow::Result<()> {
-    command("upower", &["-d"], file).await
+        Ok(())
+    }
 }
 
 fn tempfile(path: &Path, command: &str) -> anyhow::Result<File> {

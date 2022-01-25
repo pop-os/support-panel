@@ -18,11 +18,12 @@ enum Action {
     // Gtk,
 }
 
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     let args = Args::parse();
 
     if let Err(why) = match args.action {
-        Action::GenerateLogs => generate_logs(),
+        Action::GenerateLogs => generate_logs().await,
         // Action::Gtk => gtk(),
     } {
         eprintln!("{:?}", why);
@@ -30,8 +31,7 @@ fn main() {
     }
 }
 
-fn generate_logs() -> anyhow::Result<()> {
-    use futures::executor::block_on;
+async fn generate_logs() -> anyhow::Result<()> {
     use pop_support::{system76, Vendor};
 
     let sys_vendor = std::fs::read_to_string("/sys/devices/virtual/dmi/id/sys_vendor")
@@ -40,7 +40,7 @@ fn generate_logs() -> anyhow::Result<()> {
     #[allow(clippy::single_match)]
     match Vendor::guess_from(sys_vendor.trim()) {
         Some(Vendor::System76) => {
-            let path = block_on(system76::generate_logs())?;
+            let path = system76::generate_logs().await?;
             println!("PATH {path}");
         }
 
