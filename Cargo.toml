@@ -28,10 +28,7 @@ concat-in-place = "1.0.0"
 rfm = "1.0.2"
 fomat-macros = "0.3.1"
 dirs = "4.0.0"
-
-[dependencies.tokio]
-version = "1.15.0"
-features = ["full"]
+smol = "1.2.5"
 
 [dependencies.clap]
 version = "3.0.10"

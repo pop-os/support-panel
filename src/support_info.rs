@@ -1,6 +1,6 @@
 use crate::vendor::Vendor;
 use concat_in_place::strcat;
-use tokio::fs::read_to_string;
+use smol::fs::read_to_string;
 
 #[derive(Debug, Default)]
 pub struct SupportInfo {

@@ -23,17 +23,18 @@ pub struct LogAction {
     pub path: String,
 }
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() {
-    let args = Args::parse();
+fn main() {
+    smol::block_on(async {
+        let args = Args::parse();
 
-    if let Err(why) = match args.action {
-        Action::GenerateLogs(action) => generate_logs(&action.path).await,
-        Action::Gtk => gtk(),
-    } {
-        eprintln!("{:?}", why);
-        std::process::exit(1);
-    }
+        if let Err(why) = match args.action {
+            Action::GenerateLogs(action) => generate_logs(&action.path).await,
+            Action::Gtk => gtk(),
+        } {
+            eprintln!("{:?}", why);
+            std::process::exit(1);
+        }
+    })
 }
 
 async fn generate_logs(path: &str) -> anyhow::Result<()> {

@@ -17,7 +17,6 @@ pub use self::vendor::Vendor;
 use self::support_info::SupportInfo;
 use self::widgets::*;
 use anyhow::Context;
-use concat_in_place::strcat;
 use gtk::prelude::*;
 use i18n_embed::DesktopLanguageRequester;
 use relm::{Relm, Widget};
@@ -83,8 +82,6 @@ impl Widget for SupportPanel {
         let stream = relm.stream().clone();
 
         glib::MainContext::default().spawn_local(async move {
-            use tokio::fs::read_to_string;
-
             let mut info = SupportInfo::fetch().await;
 
             if info.model_and_version.is_empty() {

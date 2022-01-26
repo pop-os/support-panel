@@ -54,9 +54,7 @@ impl relm::Widget for LogDialog {
 
             LogEvent::ShowInFolder => {
                 if let Some(folder) = self.model.folder.take() {
-                    let _ = tokio::process::Command::new("xdg-open")
-                        .arg(&folder)
-                        .spawn();
+                    let _ = smol::process::Command::new("xdg-open").arg(&folder).spawn();
                 }
             }
         }

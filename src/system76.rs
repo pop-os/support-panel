@@ -3,16 +3,16 @@
 
 use anyhow::Context;
 use as_result::IntoResult;
+use smol::fs::File as AsyncFile;
+use smol::process::Command;
 use std::ffi::OsStr;
 use std::{fs::File, path::Path, process::Stdio};
-use tokio::fs::File as AsyncFile;
-use tokio::process::Command;
 
 pub async fn generate_logs(home: &str) -> anyhow::Result<String> {
     let tempdir = tempfile::tempdir().context("failed to fetch temporary directory")?;
 
     async fn system_info(file: File) -> anyhow::Result<()> {
-        use tokio::io::AsyncWriteExt;
+        use futures::io::AsyncWriteExt;
 
         let info = crate::support_info::SupportInfo::fetch().await;
 
@@ -112,7 +112,7 @@ async fn copy<D: AsRef<OsStr>, S: AsRef<OsStr>>(
     let dest = tmp.join(name.as_ref());
 
     if let Some(parent) = dest.parent() {
-        let _ = tokio::fs::create_dir_all(&parent).await;
+        let _ = smol::fs::create_dir_all(&parent).await;
     }
 
     if source.is_file() {
@@ -129,7 +129,7 @@ async fn copy<D: AsRef<OsStr>, S: AsRef<OsStr>>(
         };
 
         let (mut source, mut dest) = futures::try_join!(source, dest)?;
-        tokio::io::copy(&mut source, &mut dest)
+        smol::io::copy(&mut source, &mut dest)
             .await
             .context("failed to copy")
             .map(|_| ())
