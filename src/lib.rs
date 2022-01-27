@@ -206,7 +206,7 @@ impl Widget for SupportPanel {
 
             gtk::Box {
                 halign: gtk::Align::Center,
-                width_request: 600,
+                width_request: 300,
                 orientation: gtk::Orientation::Vertical,
 
                 #[name="support_logo"]
