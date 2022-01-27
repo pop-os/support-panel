@@ -22,10 +22,13 @@ pub async fn generate_logs(home: &str) -> anyhow::Result<String> {
             "Kernel Version: " (info.kernel) "\n"
         };
 
-        AsyncFile::from(file)
-            .write_all(data.as_bytes())
+        let mut file = AsyncFile::from(file);
+
+        file.write_all(data.as_bytes())
             .await
-            .context("failed to write system info")
+            .context("failed to write system info")?;
+
+        dbg!(file.flush().await.context("failed to write system info"))
     }
 
     let temp = tempdir.path();
@@ -106,16 +109,24 @@ async fn copy<D: AsRef<OsStr>, S: AsRef<OsStr>>(
     source: S,
     name: D,
 ) -> anyhow::Result<()> {
-    let source = Path::new(source.as_ref());
-    eprintln!("copying logs from {}", source.display());
+    async fn copy_<D: AsRef<OsStr>, S: AsRef<OsStr>>(
+        tmp: &Path,
+        source: S,
+        name: D,
+    ) -> anyhow::Result<()> {
+        let source = Path::new(source.as_ref());
+        let dest = tmp.join(name.as_ref());
 
-    let dest = tmp.join(name.as_ref());
+        eprintln!(
+            "copying logs from {} to {}",
+            source.display(),
+            dest.display()
+        );
 
-    if let Some(parent) = dest.parent() {
-        let _ = smol::fs::create_dir_all(&parent).await;
-    }
+        if let Some(parent) = dest.parent() {
+            let _ = smol::fs::create_dir_all(&parent).await;
+        }
 
-    if source.is_file() {
         let source = async move {
             AsyncFile::open(source)
                 .await
@@ -133,25 +144,32 @@ async fn copy<D: AsRef<OsStr>, S: AsRef<OsStr>>(
             .await
             .context("failed to copy")
             .map(|_| ())
+    }
+
+    let source = Path::new(source.as_ref());
+
+    if source.is_file() {
+        copy_(tmp, source, name).await
     } else {
+        let dest = tmp.join(name.as_ref());
+
         if let Ok(repos) = std::fs::read_dir(source) {
             let mut tasks = Vec::new();
 
             for entry in repos.filter_map(Result::ok) {
                 if entry.metadata().map_or(false, |m| m.is_file()) {
                     let src = entry.path();
+                    let dest = dest.join(entry.file_name());
                     if src.is_file() {
-                        let name = entry.file_name().to_owned();
-                        tasks.push(async {
-                            let name = name;
+                        tasks.push(async move {
                             let src = src;
-                            copy(&src, &dest, &name).await
+                            copy_(tmp, &src, &dest).await
                         });
                     }
                 }
             }
 
-            let _ = futures::future::join_all(tasks);
+            let _ = futures::future::join_all(tasks).await;
         }
 
         Ok(())
