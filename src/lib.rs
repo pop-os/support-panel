@@ -217,6 +217,8 @@ impl Widget for SupportPanel {
 
                 #[name="settings_box"]
                 gtk::ListBox {
+                    margin_bottom: 48,
+
                     #[name="model_info"]
                     InfoLabel(fl!("model-and-version")),
 
