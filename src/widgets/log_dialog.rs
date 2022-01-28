@@ -38,13 +38,9 @@ impl relm::Widget for LogDialog {
                     let message = fl!("log-dialog-finished", archive = archive.clone());
 
                     self.widgets.description.set_text(&message);
-
-                    if let Some(pos) = archive.rfind('/') {
-                        let folder = String::from(&archive[..pos]);
-                        self.widgets.show_folder_button.set_sensitive(true);
-                        self.widgets.close_button.set_sensitive(true);
-                        self.model.folder = Some(folder);
-                    }
+                    self.widgets.show_folder_button.set_sensitive(true);
+                    self.widgets.close_button.set_sensitive(true);
+                    self.model.folder = Some(archive);
 
                     return;
                 }
@@ -53,8 +49,11 @@ impl relm::Widget for LogDialog {
             LogEvent::Close => (),
 
             LogEvent::ShowInFolder => {
-                if let Some(folder) = self.model.folder.take() {
-                    let _ = smol::process::Command::new("xdg-open").arg(&folder).spawn();
+                if let Some(file) = self.model.folder.take() {
+                    let _ = smol::process::Command::new("nautilus")
+                        .arg("--select")
+                        .arg(&file)
+                        .spawn();
                 }
             }
         }
