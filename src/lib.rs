@@ -76,6 +76,49 @@ impl Widget for SupportPanel {
             ..add_widget(&self.widgets.button3);
             ..add_widget(&self.widgets.button4);
         };
+
+        let clamp = self.widgets.clamp.downgrade();
+
+        let id = std::rc::Rc::new(std::cell::RefCell::new(None));
+
+        self.widgets
+            .root
+            .connect_size_allocate(move |widget, _size| {
+                if id.borrow().is_none() {
+                    let clamp = clamp.clone();
+                    let widget = widget.downgrade();
+                    let id_ = id.clone();
+
+                    use glib::timeout_add_local;
+                    use std::time::Duration;
+
+                    *id.borrow_mut() =
+                        Some(timeout_add_local(Duration::from_millis(16), move || {
+                            if let Some(widget) = widget.upgrade() {
+                                if !widget.get_visible() {
+                                    return glib::Continue(false);
+                                }
+
+                                let width = widget.allocation().width;
+                                if width < 2 {
+                                    return glib::Continue(true);
+                                }
+
+                                if let Some(clamp) = clamp.upgrade() {
+                                    clamp.set_width_request(if width > 600 {
+                                        600
+                                    } else {
+                                        (width * 90) / 100
+                                    });
+                                }
+                            }
+
+                            id_.borrow_mut().take();
+
+                            glib::Continue(false)
+                        }));
+                }
+            });
     }
 
     fn model(relm: &Relm<Self>, window: gtk::Window) -> SupportModel {
@@ -201,12 +244,13 @@ impl Widget for SupportPanel {
     }
 
     relm::view! {
+        #[name="root"]
         gtk::ScrolledWindow {
             hscrollbar_policy: gtk::PolicyType::Never,
 
+            #[name="clamp"]
             gtk::Box {
                 halign: gtk::Align::Center,
-                width_request: 300,
                 orientation: gtk::Orientation::Vertical,
 
                 #[name="support_logo"]
