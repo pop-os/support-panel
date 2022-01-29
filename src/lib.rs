@@ -183,20 +183,16 @@ impl Widget for SupportPanel {
                     }
                 };
 
-                let set_by_image = |image: &str| {
-                    self.widgets.support_logo.set_icon_name(Some(image));
-                };
-
                 if let Some(vendor) = info.vendor {
                     self.widgets.box6.show();
 
                     match vendor {
-                        Vendor::System76 => set_by_resource("/org/pop/support/system76.png"),
+                        Vendor::System76 => set_by_resource("/org/pop/support/system76.svg"),
                     }
                 } else {
                     self.widgets.box6.hide();
 
-                    set_by_image("distributor-logo-pop-os")
+                    set_by_resource("/org/pop/support/pop.svg");
                 }
             }
 

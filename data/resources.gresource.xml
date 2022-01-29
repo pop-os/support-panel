@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-    <gresource prefix="/org/pop/support/">
-      <file>system76.png</file>
-    </gresource>
+	<gresource prefix="/org/pop/support/">
+		<file>pop.svg</file>
+		<file>system76.svg</file>
+	</gresource>
 </gresources>
