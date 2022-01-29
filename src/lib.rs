@@ -21,6 +21,8 @@ use gtk::prelude::*;
 use i18n_embed::DesktopLanguageRequester;
 use relm::{Relm, Widget};
 
+const LOGO_SIZE: i32 = 256;
+
 pub fn localize() {
     let localizer = localize::localizer();
     let requested_languages = DesktopLanguageRequester::requested_languages();
@@ -172,8 +174,9 @@ impl Widget for SupportPanel {
                 serial_number_row.hide();
 
                 let set_by_resource = |resource: &str| {
-                    let pixbuf =
-                        gdk_pixbuf::Pixbuf::from_resource_at_scale(resource, 256, 256, true);
+                    let pixbuf = gdk_pixbuf::Pixbuf::from_resource_at_scale(
+                        resource, LOGO_SIZE, LOGO_SIZE, true,
+                    );
 
                     if let Ok(pixbuf) = pixbuf {
                         self.widgets.support_logo.set_pixbuf(Some(&pixbuf));
@@ -182,7 +185,6 @@ impl Widget for SupportPanel {
 
                 let set_by_image = |image: &str| {
                     self.widgets.support_logo.set_icon_name(Some(image));
-                    self.widgets.support_logo.set_size_request(256, 256);
                 };
 
                 if let Some(vendor) = info.vendor {
@@ -256,7 +258,10 @@ impl Widget for SupportPanel {
                 #[name="support_logo"]
                 gtk::Image {
                     margin_top: 48,
-                    margin_bottom: 48
+                    margin_bottom: 48,
+                    width_request: LOGO_SIZE,
+                    height_request: LOGO_SIZE,
+                    pixel_size: LOGO_SIZE,
                 },
 
                 #[name="settings_box"]
