@@ -22,6 +22,7 @@ pub enum LogEvent {
 impl relm::Widget for LogDialog {
     fn init_view(&mut self) {
         self.widgets.header.style_context().add_class("h1");
+        self.widgets.spinner.start();
     }
 
     fn model(_: &Relm<Self>, dialog: gtk::Dialog) -> LogModel {
@@ -34,6 +35,8 @@ impl relm::Widget for LogDialog {
     fn update(&mut self, event: LogEvent) {
         match event {
             LogEvent::GeneratedLogs(result) => {
+                self.widgets.spinner.hide();
+
                 if let Ok(archive) = result {
                     let message = fl!("log-dialog-finished", archive = archive.clone());
 
@@ -50,6 +53,8 @@ impl relm::Widget for LogDialog {
 
             LogEvent::ShowInFolder => {
                 if let Some(file) = self.model.folder.take() {
+                    self.widgets.spinner.show();
+
                     let _ = smol::process::Command::new("nautilus")
                         .arg("--select")
                         .arg(&file)
@@ -76,11 +81,19 @@ impl relm::Widget for LogDialog {
                 use_markup: true,
             },
 
-            #[name="description"]
-            gtk::Label {
-                label: &fl!("log-dialog-creating"),
+            gtk::Box {
                 halign: gtk::Align::Center,
-                line_wrap: true,
+                orientation: gtk::Orientation::Horizontal,
+                spacing: 12,
+
+                #[name="spinner"]
+                gtk::Spinner {},
+
+                #[name="description"]
+                gtk::Label {
+                    label: &fl!("log-dialog-creating"),
+                    line_wrap: true,
+                }
             },
 
             gtk::ButtonBox {
