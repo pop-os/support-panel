@@ -213,7 +213,7 @@ impl Widget for SupportPanel {
                         let dialog = gtk::MessageDialogBuilder::new()
                             .transient_for(&self.model.window)
                             .modal(true)
-                            .decorated(false)
+                            .decorated(true)
                             .resizable(false)
                             .default_width(480)
                             .build();

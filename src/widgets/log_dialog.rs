@@ -26,8 +26,6 @@ impl relm::Widget for LogDialog {
     }
 
     fn model(_: &Relm<Self>, dialog: gtk::MessageDialog) -> LogModel {
-        dialog.style_context().add_class("csd");
-
         LogModel {
             dialog: Some(dialog),
             folder: None,
