@@ -210,13 +210,26 @@ impl Widget for SupportPanel {
                 #[allow(clippy::single_match)]
                 match self.model.vendor {
                     None | Some(Vendor::System76) => {
-                        let dialog = gtk::DialogBuilder::new()
+                        let dialog = gtk::MessageDialogBuilder::new()
                             .transient_for(&self.model.window)
                             .modal(true)
                             .decorated(false)
                             .resizable(false)
                             .default_width(480)
                             .build();
+
+                        // NOTE: Hack to get a dialog without padding around the edge of the window.
+                        for child in dialog.children() {
+                            if child.style_context().has_class("dialog-vbox") {
+                                if let Ok(vbox) = child.downcast::<gtk::Box>() {
+                                    for child in vbox.children() {
+                                        if child.style_context().has_class("horizontal") {
+                                            vbox.remove(&child);
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         let dialog_inner = relm::init::<LogDialog>(dialog.clone()).unwrap();
 

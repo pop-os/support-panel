@@ -7,7 +7,7 @@ use relm::Relm;
 
 #[derive(Debug, Default)]
 pub struct LogModel {
-    dialog: Option<gtk::Dialog>,
+    dialog: Option<gtk::MessageDialog>,
     folder: Option<String>,
 }
 
@@ -25,7 +25,9 @@ impl relm::Widget for LogDialog {
         self.widgets.spinner.start();
     }
 
-    fn model(_: &Relm<Self>, dialog: gtk::Dialog) -> LogModel {
+    fn model(_: &Relm<Self>, dialog: gtk::MessageDialog) -> LogModel {
+        dialog.style_context().add_class("csd");
+
         LogModel {
             dialog: Some(dialog),
             folder: None,
