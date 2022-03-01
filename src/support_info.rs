@@ -1,24 +1,25 @@
 use crate::vendor::Vendor;
 use concat_in_place::strcat;
 use smol::fs::read_to_string;
+use std::process::Command;
 
 #[derive(Debug, Default)]
 pub struct SupportInfo {
-    pub kernel: String,
     pub vendor: Option<Vendor>,
     pub model_and_version: String,
     pub serial_number: String,
     pub operating_system: String,
+    pub kernel_version: String,
+    pub kernel_revision: String,
 }
 
 impl SupportInfo {
     pub async fn fetch() -> Self {
-        let (sys_vendor, version, product_name, os_release, kernel) = futures::join!(
+        let (sys_vendor, version, product_name, os_release) = futures::join!(
             read_to_string("/sys/devices/virtual/dmi/id/sys_vendor"),
             read_to_string("/sys/devices/virtual/dmi/id/product_version"),
             read_to_string("/sys/devices/virtual/dmi/id/product_name"),
             read_to_string("/etc/os-release"),
-            read_to_string("/proc/version"),
         );
 
         let mut model_and_version = String::new();
@@ -59,15 +60,36 @@ impl SupportInfo {
                 }
             }
         }
+        
+        let uname_r = Command::new("uname")
+            .arg("-r")
+            .output()
+            .expect("failed to get kernel release");
+        let kernel_version = String::from_utf8_lossy(&uname_r.stdout)
+            .to_string()
+            .trim()
+            .to_string();
+        
+        let uname_v = Command::new("uname")
+            .arg("-v")
+            .output()
+            .expect("failed to get kernel version");
+        let kernel_revision = String::from_utf8_lossy(&uname_v.stdout)
+            .to_string()
+            .split_whitespace()
+            .nth(0)
+            .unwrap_or("")
+            .to_string();
 
         let serial_number = String::new();
 
         Self {
-            kernel: kernel.unwrap_or_default(),
             model_and_version,
             operating_system,
             serial_number,
             vendor,
+            kernel_version,
+            kernel_revision,
         }
     }
 }
