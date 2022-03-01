@@ -1,10 +1,12 @@
 // Copyright 2022 System76 <info@system76.com>
 // SPDX-License-Identifier: MPL-2.0
 
+mod clamp;
 mod info_box;
 mod info_label;
 mod log_dialog;
 
+pub use self::clamp::*;
 pub use self::info_box::*;
 pub use self::info_label::*;
 pub use self::log_dialog::*;
