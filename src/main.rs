@@ -38,20 +38,20 @@ fn main() {
 }
 
 async fn generate_logs(path: &str) -> anyhow::Result<()> {
-    use pop_support::{system76, Vendor};
+    use pop_support::logs;
 
-    let sys_vendor = std::fs::read_to_string("/sys/devices/virtual/dmi/id/sys_vendor")
-        .context("could not fetch system vendor info")?;
+    // let sys_vendor = std::fs::read_to_string("/sys/devices/virtual/dmi/id/sys_vendor")
+    //     .context("could not fetch system vendor info")?;
+    // #[allow(clippy::single_match)]
+    // match Vendor::guess_from(sys_vendor.trim()) {
+    //     Some(Vendor::System76) => {
+    //     }
+    //     _ => (),
+    // }
 
-    #[allow(clippy::single_match)]
-    match Vendor::guess_from(sys_vendor.trim()) {
-        Some(Vendor::System76) => {
-            let path = system76::generate_logs(path).await?;
-            println!("PATH {path}");
-        }
+    let path = logs::generate(path).await?;
 
-        _ => (),
-    }
+    println!("PATH {path}");
 
     Ok(())
 }

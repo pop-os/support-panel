@@ -8,7 +8,7 @@ use smol::process::Command;
 use std::ffi::OsStr;
 use std::{fs::File, path::Path, process::Stdio};
 
-pub async fn generate_logs(home: &str) -> anyhow::Result<String> {
+pub async fn generate(home: &str) -> anyhow::Result<String> {
     let tempdir = tempfile::tempdir().context("failed to fetch temporary directory")?;
 
     async fn system_info(file: File) -> anyhow::Result<()> {

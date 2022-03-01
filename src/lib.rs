@@ -5,8 +5,8 @@
 extern crate cascade;
 
 pub mod gresource;
+pub mod logs;
 pub mod support_info;
-pub mod system76;
 pub mod widgets;
 
 mod localize;
