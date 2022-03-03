@@ -3,6 +3,15 @@ use concat_in_place::strcat;
 use smol::fs::read_to_string;
 use std::process::Command;
 
+use const_format::concatcp;
+
+const DMI_DIR: &str = "/sys/devices/virtual/dmi/id/";
+const BOARD_NAME: &str = concatcp!(DMI_DIR, "board_name");
+const BOARD_VERSION: &str = concatcp!(DMI_DIR, "board_version");
+const PRODUCT_NAME: &str = concatcp!(DMI_DIR, "product_name");
+const PRODUCT_VERSION: &str = concatcp!(DMI_DIR, "product_version");
+const SYS_VENDOR: &str = concatcp!(DMI_DIR, "sys_vendor");
+
 #[derive(Debug, Default)]
 pub struct SupportInfo {
     pub vendor: Option<Vendor>,
@@ -15,16 +24,21 @@ pub struct SupportInfo {
 
 impl SupportInfo {
     pub async fn fetch() -> Self {
+        let vendor = Vendor::guess();
+
+        let (dmi_name, dmi_version) = match vendor {
+            Some(Vendor::System76) => (PRODUCT_NAME, PRODUCT_VERSION),
+            _ => (BOARD_NAME, BOARD_VERSION),
+        };
+
         let (sys_vendor, version, product_name, os_release) = futures::join!(
-            read_to_string("/sys/devices/virtual/dmi/id/sys_vendor"),
-            read_to_string("/sys/devices/virtual/dmi/id/board_version"),
-            read_to_string("/sys/devices/virtual/dmi/id/board_name"),
+            read_to_string(SYS_VENDOR),
+            read_to_string(dmi_version),
+            read_to_string(dmi_name),
             read_to_string("/etc/os-release"),
         );
 
         let mut model_and_version = String::new();
-
-        let vendor = Vendor::guess();
 
         if let Ok(sys_vendor) = sys_vendor {
             model_and_version.clear();
