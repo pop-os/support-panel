@@ -53,6 +53,8 @@ fn gtk() -> anyhow::Result<()> {
 
     let window = gtk::Window::new(gtk::WindowType::Toplevel);
 
+    window.set_size_request(400, 600);
+
     let panel = relm::init::<SupportPanel>(window.clone()).unwrap();
 
     window.connect_delete_event(|_, _| {
