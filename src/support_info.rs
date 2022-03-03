@@ -24,11 +24,9 @@ impl SupportInfo {
 
         let mut model_and_version = String::new();
 
-        let mut vendor = None;
+        let vendor = Vendor::guess();
 
         if let Ok(sys_vendor) = sys_vendor {
-            vendor = Vendor::guess_from(sys_vendor.trim());
-
             model_and_version.clear();
             model_and_version.push_str(sys_vendor.trim());
 
@@ -74,11 +72,12 @@ impl SupportInfo {
             .arg("-v")
             .output()
             .expect("failed to get kernel version");
+
         let kernel_revision = String::from_utf8_lossy(&uname_v.stdout)
             .to_string()
             .split_whitespace()
-            .nth(0)
-            .unwrap_or("")
+            .next()
+            .unwrap_or_default()
             .to_string();
 
         let serial_number = String::new();
