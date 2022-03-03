@@ -17,8 +17,8 @@ impl SupportInfo {
     pub async fn fetch() -> Self {
         let (sys_vendor, version, product_name, os_release) = futures::join!(
             read_to_string("/sys/devices/virtual/dmi/id/sys_vendor"),
-            read_to_string("/sys/devices/virtual/dmi/id/product_version"),
-            read_to_string("/sys/devices/virtual/dmi/id/product_name"),
+            read_to_string("/sys/devices/virtual/dmi/id/board_version"),
+            read_to_string("/sys/devices/virtual/dmi/id/board_name"),
             read_to_string("/etc/os-release"),
         );
 
@@ -60,7 +60,7 @@ impl SupportInfo {
                 }
             }
         }
-        
+
         let uname_r = Command::new("uname")
             .arg("-r")
             .output()
@@ -69,7 +69,7 @@ impl SupportInfo {
             .to_string()
             .trim()
             .to_string();
-        
+
         let uname_v = Command::new("uname")
             .arg("-v")
             .output()
