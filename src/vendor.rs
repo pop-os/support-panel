@@ -14,7 +14,15 @@ impl Vendor {
         if let Ok(sys_vendor) = read_to_string("/sys/devices/virtual/dmi/id/sys_vendor") {
             #[allow(clippy::single_match)]
             match sys_vendor.trim() {
-                "HP" => return Some(Vendor::Hp),
+                "HP" => {
+                    if let Ok(version) = read_to_string("/sys/devices/virtual/dmi/id/board_version")
+                    {
+                        match version.trim() {
+                            "8A78" => return Some(Vendor::Hp),
+                            _ => (),
+                        }
+                    }
+                }
                 "System76" => return Some(Vendor::System76),
                 _ => (),
             }

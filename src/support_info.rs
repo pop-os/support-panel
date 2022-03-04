@@ -27,14 +27,14 @@ impl SupportInfo {
         let vendor = Vendor::guess();
 
         let (dmi_name, dmi_version) = match vendor {
-            Some(Vendor::System76) => (PRODUCT_NAME, PRODUCT_VERSION),
-            _ => (BOARD_NAME, BOARD_VERSION),
+            Some(_) => (PRODUCT_NAME, PRODUCT_VERSION),
+            None => (BOARD_NAME, BOARD_VERSION),
         };
 
         let (sys_vendor, version, product_name, os_release) = futures::join!(
             read_to_string(SYS_VENDOR),
-            read_to_string(dmi_version),
             read_to_string(dmi_name),
+            read_to_string(dmi_version),
             read_to_string("/etc/os-release"),
         );
 
