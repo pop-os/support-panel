@@ -162,9 +162,15 @@ impl Widget for SupportPanel {
 
             SupportEvent::CommunitySupport => open_url("https://chat.pop-os.org"),
 
-            SupportEvent::CreateSupportTicket => {
-                open_url("https://system76.com/my-account/support-tickets/new")
-            }
+            SupportEvent::CreateSupportTicket => match self.model.vendor {
+                Some(Vendor::System76) => {
+                    open_url("https://system76.com/my-account/support-tickets/new")
+                }
+                Some(Vendor::Hp) => open_url("https://hpdevone.com/user/support"),
+                None => {
+                    eprintln!("cannot create support ticket for unsupported vendor");
+                }
+            },
 
             SupportEvent::CreateLogFiles => {
                 let dialog = gtk::MessageDialogBuilder::new()
