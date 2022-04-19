@@ -50,18 +50,26 @@ impl SupportInfo {
                 name = name.trim();
 
                 if !name.is_empty() && name != sys_vendor  {
-                    if let Some(stripped) = name.strip_prefix(sys_vendor) {
-                        strcat!(&mut model_and_version, " " stripped);
-                    } else {
-                        strcat!(&mut model_and_version, " " name);
-                    }
-                }
-            }
+                    // Ensure that the name does not contain the vendor.
+                    name = match name.strip_prefix(sys_vendor) {
+                        Some(stripped) => stripped.trim(),
+                        None => name
+                    };
 
-            if let Ok(mut version) = version.as_deref() {
-                version = version.trim();
-                if !version.is_empty() {
-                    strcat!(&mut model_and_version, " (" version.trim() ")");
+                    strcat!(&mut model_and_version, " " name);
+                }
+
+                if let Ok(mut version) = version.as_deref() {
+                    version = version.trim();
+
+                    // These have bogus values for their version.
+                    const IGNORE_PRODUCTS: &[&str] = &[
+                        "Dev One"
+                    ];
+
+                    if !version.is_empty() && !IGNORE_PRODUCTS.contains(&name) {
+                        strcat!(&mut model_and_version, " (" version.trim() ")");
+                    }
                 }
             }
         }
