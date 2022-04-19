@@ -40,14 +40,16 @@ impl SupportInfo {
 
         let mut model_and_version = String::new();
 
-        if let Ok(sys_vendor) = sys_vendor {
+        if let Ok(mut sys_vendor) = sys_vendor.as_deref() {
+            sys_vendor = sys_vendor.trim();
+
             model_and_version.clear();
-            model_and_version.push_str(sys_vendor.trim());
+            model_and_version.push_str(sys_vendor);
 
             if let Ok(mut name) = product_name.as_deref() {
                 name = name.trim();
 
-                if !name.is_empty() {
+                if !name.is_empty() && name != sys_vendor  {
                     strcat!(&mut model_and_version, " " name.trim());
                 }
             }
