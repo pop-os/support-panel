@@ -44,12 +44,19 @@ impl SupportInfo {
             model_and_version.clear();
             model_and_version.push_str(sys_vendor.trim());
 
-            if let Ok(name) = product_name {
-                strcat!(&mut model_and_version, " " name.trim());
+            if let Ok(mut name) = product_name.as_deref() {
+                name = name.trim();
+
+                if !name.is_empty() {
+                    strcat!(&mut model_and_version, " " name.trim());
+                }
             }
 
-            if let Ok(version) = version {
-                strcat!(&mut model_and_version, " (" version.trim() ")");
+            if let Ok(mut version) = version.as_deref() {
+                version = version.trim();
+                if !version.is_empty() {
+                    strcat!(&mut model_and_version, " (" version.trim() ")");
+                }
             }
         }
 
