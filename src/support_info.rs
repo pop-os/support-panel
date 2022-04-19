@@ -50,7 +50,11 @@ impl SupportInfo {
                 name = name.trim();
 
                 if !name.is_empty() && name != sys_vendor  {
-                    strcat!(&mut model_and_version, " " name.trim());
+                    if let Some(stripped) = name.strip_prefix(sys_vendor) {
+                        strcat!(&mut model_and_version, " " stripped);
+                    } else {
+                        strcat!(&mut model_and_version, " " name);
+                    }
                 }
             }
 
