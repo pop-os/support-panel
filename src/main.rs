@@ -51,6 +51,8 @@ fn gtk() -> anyhow::Result<()> {
     let _ = gtk::init();
     let _ = pop_support::gresource::init();
 
+    pop_support::localize();
+
     let window = gtk::Window::new(gtk::WindowType::Toplevel);
 
     window.set_size_request(400, 600);
