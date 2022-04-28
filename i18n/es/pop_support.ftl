@@ -1,0 +1,17 @@
+create-logs = Crear Archivos de Registro para Soporte
+create-logs-button = {log-dialog}
+dialog-close = Cerrar
+dialog-show-in-folder = Mostrar en Carpeta
+documentation = Documentación
+documentation-button = Navegar
+log-dialog = Crear Archivos de Registro
+log-dialog-creating = Creando Ficheros...
+log-dialog-finished = Un Archivo de Registro ({$archive}) se ha creado.
+model-and-version = Modelo y Versión
+os-version = Sistema Operativo y Versión
+serial-number = Número de Serie
+support-community = Soporte de la Comunidad en el Chat de Pop!_OS
+support-community-button = Unirse
+support-professional = Soporte Profesional
+support-professional-button = Crear un ticket
+unknown = Desconocido
