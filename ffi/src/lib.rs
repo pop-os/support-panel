@@ -34,4 +34,5 @@ pub extern "C" fn pop_support_attach(c_container: *mut GtkContainer, c_window: *
 #[no_mangle]
 pub extern "C" fn pop_support_init() {
     let _ = gresource::init();
+    pop_support::localize();
 }
