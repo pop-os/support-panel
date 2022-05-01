@@ -17,7 +17,7 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
         let info = crate::support_info::SupportInfo::fetch().await;
 
         let data = fomat_macros::fomat! {
-            "System76 Model: " (info.model_and_version) "\n"
+            "Model: " (info.model_and_version) "\n"
             "OS Version: " (info.operating_system) "\n"
             "Kernel Version: " (info.kernel_version) "\n"
             "Kernel Revision: " (info.kernel_revision) "\n"
