@@ -49,11 +49,11 @@ impl SupportInfo {
             if let Ok(mut name) = product_name.as_deref() {
                 name = name.trim();
 
-                if !name.is_empty() && name != sys_vendor  {
+                if !name.is_empty() && name != sys_vendor {
                     // Ensure that the name does not contain the vendor.
                     name = match name.strip_prefix(sys_vendor) {
                         Some(stripped) => stripped.trim(),
-                        None => name
+                        None => name,
                     };
 
                     strcat!(&mut model_and_version, " " name);
@@ -63,9 +63,7 @@ impl SupportInfo {
                     version = version.trim();
 
                     // These have bogus values for their version.
-                    const IGNORE_PRODUCTS: &[&str] = &[
-                        "Dev One"
-                    ];
+                    const IGNORE_PRODUCTS: &[&str] = &["Dev One"];
 
                     if !version.is_empty() && !IGNORE_PRODUCTS.contains(&name) {
                         strcat!(&mut model_and_version, " (" version.trim() ")");
