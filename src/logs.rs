@@ -35,7 +35,7 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
     let temp = tempdir.path();
 
     let _ = futures::join!(
-        command("df", &["-h"], temp, "df"),
+        command("df", &["-h"], temp, "free-disk-space"),
         command("dmesg", &[], temp, "dmesg"),
         command("dmidecode", &[], temp, "dmidecode"),
         command("efibootmgr", &["-v"], temp, "efibootmgr"),
@@ -49,12 +49,12 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
             temp,
             "lsblk"
         ),
-        command("last", &[], temp, "last"),
+        command("last", &[], temp, "reboot-history"),
         command("lspci", &["-vv"], temp, "lspci"),
         command("lsusb", &["-vv"], temp, "lsusb"),
         command("lsmod", &[], temp, "lsmod"),
         command("sensors", &[], temp, "sensors"),
-        command("systemd-analyze", &["blame"], temp, "systemd-blame"),
+        command("systemd-analyze", &["blame"], temp, "boot-process-times"),
         command("upower", &["-d"], temp, "upower"),
         command("uptime", &[], temp, "uptime"),
         command("xinput", &[], temp, "xinput"),
