@@ -35,30 +35,49 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
     let temp = tempdir.path();
 
     let _ = futures::join!(
-        command("df", &["-h"], temp),
-        command("dmesg", &[], temp),
-        command("dmidecode", &[], temp),
-        command("journalctl", &["--since", "yesterday"], temp),
-        command("lsblk", &["-f"], temp),
-        command("lspci", &["-vv"], temp),
-        command("lsusb", &["-vv"], temp),
-        command("sensors", &[], temp),
-        command("upower", &["-d"], temp),
-        command("uptime", &[], temp),
+        command("df", &["-h"], temp, "df"),
+        command("dmesg", &[], temp, "dmesg"),
+        command("dmidecode", &[], temp, "dmidecode"),
+        command("efibootmgr", &["-v"], temp, "efibootmgr"),
+        command("journalctl", &["--since", "yesterday"], temp, "journalctl"),
+        command(
+            "lsblk",
+            &[
+                "-o",
+                "NAME,MODEL,FSTYPE,FSVER,SIZE,FSUSE%,MOUNTPOINTS,LABEL,UUID"
+            ],
+            temp,
+            "lsblk"
+        ),
+        command("last", &[], temp, "last"),
+        command("lspci", &["-vv"], temp, "lspci"),
+        command("lsusb", &["-vv"], temp, "lsusb"),
+        command("lsmod", &[], temp, "lsmod"),
+        command("sensors", &[], temp, "sensors"),
+        command("systemd-analyze", &["blame"], temp, "systemd-blame"),
+        command("upower", &["-d"], temp, "upower"),
+        command("uptime", &[], temp, "uptime"),
+        command("xinput", &[], temp, "xinput"),
         copy(temp, "/etc/apt/sources.list.d", "apt/sources.list.d"),
         copy(temp, "/etc/apt/sources.list", "apt/sources.list"),
+        copy(temp, "/etc/crypttab", "crypttab"),
         copy(temp, "/etc/fstab", "fstab"),
+        copy(temp, "/etc/kernelstub/configuration", "kernelstub"),
         copy(temp, "/var/log/apt/history.log", "apt/history.log"),
         copy(
             temp,
             "/var/log/apt/history.log.1.gz",
-            "apt/history-rotated.log"
+            "apt/history-rotated.log.gz"
         ),
         copy(temp, "/var/log/apt/term.log", "apt/term.log"),
-        copy(temp, "/var/log/apt/term.log.1.gz", "apt/term-rotated.log"),
+        copy(
+            temp,
+            "/var/log/apt/term.log.1.gz",
+            "apt/term-rotated.log.gz"
+        ),
         copy(temp, "/var/log/syslog", "syslog.log"),
         copy(temp, "/var/log/Xorg.0.log", "Xorg.0.log"),
-        system_info(tempfile(temp, "systeminfo.txt")?),
+        system_info(tempfile(temp, "systeminfo.txt")?)
     );
 
     let files_to_collect: Vec<String> = std::fs::read_dir(temp)
@@ -92,13 +111,13 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
     Ok(log_path)
 }
 
-async fn command(command: &str, args: &[&str], temp: &Path) -> anyhow::Result<()> {
+async fn command(command: &str, args: &[&str], temp: &Path, filename: &str) -> anyhow::Result<()> {
     eprintln!("fetching output from `{command}`");
     Command::new(command)
         .args(args)
         .stdin(Stdio::null())
         .stderr(Stdio::null())
-        .stdout(tempfile(temp, command)?)
+        .stdout(tempfile(temp, filename)?)
         .status()
         .await
         .and_then(IntoResult::into_result)
