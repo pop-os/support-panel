@@ -1,0 +1,17 @@
+create-logs = Destek için Günlük Arşivleri Oluştur
+create-logs-button = {log-dialog}
+dialog-close = Kapat
+dialog-show-in-folder = Klasörde Göster
+documentation = Rehber
+documentation-button = Gözat
+log-dialog = Günlük Dosyaları Oluştur
+log-dialog-creating = Dosyalar Oluşturuluyor...
+log-dialog-finished = Günlük arşivi ({$archive}) oluşturuldu.
+model-and-version = Model ve Sürüm
+os-version = İşletim Sistemi ve Sürüm
+serial-number = Seri Numarası
+support-community = Pop!_OS Chat'teki Topluluk Desteği
+support-community-button = Katıl
+support-professional = Uzman Desteği
+support-professional-button = Kayıt Oluştur
+unknown = Bilinmiyor
