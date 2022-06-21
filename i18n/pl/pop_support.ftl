@@ -1,0 +1,17 @@
+create-logs = Utwórz archiwa dzienników dla wsparcia
+create-logs-button = {log-dialog}
+dialog-close = Zamknij
+dialog-show-in-folder = Pokaż w folderze
+documentation = Dokumentacja
+documentation-button = Przeglądaj
+log-dialog = Utwórz pliki dzienników
+log-dialog-creating = Tworzenie plików...
+log-dialog-finished = Archiwum dzienników ({$archive}) zostało utworzone.
+model-and-version = Model i wersja
+os-version = System operacyjny i wersja
+serial-number = Numer seryjny
+support-community = Wsparcie społeczności w Pop!_OS Chat
+support-community-button = Dołącz
+support-professional = Profesjonalne wsparcie
+support-professional-button = Utwórz zgłoszenie
+unknown = Nieznany
