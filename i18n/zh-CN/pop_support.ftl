@@ -1,0 +1,17 @@
+create-logs = 收集日志文件以寻求支持
+create-logs-button = {log-dialog}
+dialog-close = 关闭
+dialog-show-in-folder = 在文件夹中打开
+documentation = 文档
+documentation-button = 浏览
+log-dialog = 收集日志文件
+log-dialog-creating = 正在收集日志文件...
+log-dialog-finished = 日志文件归档 ({$archive}) 已经创建成功.
+model-and-version = 型号与版本
+os-version = 操作系统和版本号
+serial-number = 序列号
+support-community = Community Support in Pop!_OS Chat
+support-community-button = 加入我们
+support-professional = 专业支持
+support-professional-button = Create a ticket
+unknown = 未知
