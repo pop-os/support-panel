@@ -1,0 +1,17 @@
+create-logs = Opret Logarkiver for Support
+create-logs-button = {log-dialog}
+dialog-close = Luk
+dialog-show-in-folder = Vis i Mappe
+documentation = Dokumentation
+documentation-button = Gennemse
+log-dialog = Opret Logfiler
+log-dialog-creating = Opretter Filer...
+log-dialog-finished = Et logarkiv ({$archive}) blev oprettet.
+model-and-version = Model og Version
+os-version = Operativsystem og Version
+serial-number = Serienummer
+support-community = Fællesskab Support i Pop!_OS Chat
+support-community-button = Deltag
+support-professional = Professionel Support
+support-professional-button = Opret en sag
+unknown = Ukendt
