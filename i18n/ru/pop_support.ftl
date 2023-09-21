@@ -1,0 +1,17 @@
+create-logs = Создать архивы логов для поддержки
+create-logs-button = {log-dialog}
+dialog-close = Закрыть
+dialog-show-in-folder = Показать в папке
+documentation = Документация
+documentation-button = Просмотреть
+log-dialog = Создать файлы логов
+log-dialog-creating = Создание файлов...
+log-dialog-finished = Архив логов ({$archive}) успешно создан.
+model-and-version = Модель, версия
+os-version = Операционная система, версия
+serial-number = Серийный номер
+support-community = Поддержка сообщества в чате Pop!_OS
+support-community-button = Присоединиться
+support-professional = Профессиональная поддержка
+support-professional-button = Создать тикет
+unknown = Неизвестно
