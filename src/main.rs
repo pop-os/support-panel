@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use clap::Parser;
-use gtk::prelude::*;
-use pop_support::SupportPanel;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -14,7 +12,6 @@ struct Args {
 #[derive(Debug, clap::Subcommand)]
 enum Action {
     GenerateLogs(LogAction),
-    Gtk,
 }
 
 #[derive(Debug, Parser)]
@@ -23,12 +20,11 @@ pub struct LogAction {
 }
 
 fn main() {
-    smol::block_on(async {
+    compio_runtime::Runtime::new().unwrap().block_on(async {
         let args = Args::parse();
 
         if let Err(why) = match args.action {
             Action::GenerateLogs(action) => generate_logs(&action.path).await,
-            Action::Gtk => gtk(),
         } {
             eprintln!("{:?}", why);
             std::process::exit(1);
@@ -37,37 +33,6 @@ fn main() {
 }
 
 async fn generate_logs(path: &str) -> anyhow::Result<()> {
-    use pop_support::logs;
-
-    let path = logs::generate(path).await?;
-
-    println!("PATH {path}");
-
-    Ok(())
-}
-
-#[allow(unused)]
-fn gtk() -> anyhow::Result<()> {
-    let _ = gtk::init();
-    let _ = pop_support::gresource::init();
-
-    pop_support::localize();
-
-    let window = gtk::Window::new(gtk::WindowType::Toplevel);
-
-    window.set_size_request(400, 600);
-
-    let panel = relm::init::<SupportPanel>(window.clone()).unwrap();
-
-    window.connect_delete_event(|_, _| {
-        gtk::main_quit();
-        gtk::Inhibit(false)
-    });
-
-    window.add(panel.widget());
-    window.show_all();
-
-    gtk::main();
-
+    println!("PATH {}", pop_support::logs::generate(path).await?);
     Ok(())
 }

@@ -1,3 +1,9 @@
+pop-support (2.0.0) noble; urgency=medium
+
+  * Deprecate GTK and provide only CLI for COSMIC
+
+ -- Michael Murphy <michael@mmurphy.dev>  Wed, 17 Dec 2025 04:55:13 +0100
+
 pop-support-panel (1.0.0) impish; urgency=medium
 
   * Initial release.

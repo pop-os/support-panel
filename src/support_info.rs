@@ -1,7 +1,6 @@
 use crate::vendor::Vendor;
 use concat_in_place::strcat;
-use smol::fs::read_to_string;
-use std::process::Command;
+use std::{fs::read_to_string, process::Command};
 
 use const_format::concatcp;
 
@@ -12,7 +11,7 @@ const PRODUCT_NAME: &str = concatcp!(DMI_DIR, "product_name");
 const PRODUCT_VERSION: &str = concatcp!(DMI_DIR, "product_version");
 const SYS_VENDOR: &str = concatcp!(DMI_DIR, "sys_vendor");
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SupportInfo {
     pub vendor: Option<Vendor>,
     pub model_and_version: String,
@@ -31,12 +30,10 @@ impl SupportInfo {
             None => (BOARD_NAME, BOARD_VERSION),
         };
 
-        let (sys_vendor, version, product_name, os_release) = futures::join!(
-            read_to_string(SYS_VENDOR),
-            read_to_string(dmi_version),
-            read_to_string(dmi_name),
-            read_to_string("/etc/os-release"),
-        );
+        let sys_vendor = read_to_string(SYS_VENDOR);
+        let version = read_to_string(dmi_version);
+        let product_name = read_to_string(dmi_name);
+        let os_release = read_to_string("/etc/os-release");
 
         let mut model_and_version = String::new();
 
@@ -56,7 +53,7 @@ impl SupportInfo {
                         None => name,
                     };
 
-                    strcat!(&mut model_and_version, " " name);
+                    _ = strcat!(&mut model_and_version, " " name);
                 }
 
                 if let Ok(mut version) = version.as_deref() {
@@ -66,7 +63,7 @@ impl SupportInfo {
                     const IGNORE_PRODUCTS: &[&str] = &["Dev One"];
 
                     if !version.is_empty() && !IGNORE_PRODUCTS.contains(&name) {
-                        strcat!(&mut model_and_version, " (" version.trim() ")");
+                        _ = strcat!(&mut model_and_version, " (" version.trim() ")");
                     }
                 }
             }

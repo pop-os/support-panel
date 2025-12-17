@@ -3,16 +3,21 @@
 
 use anyhow::Context;
 use as_result::IntoResult;
-use smol::fs::File as AsyncFile;
-use smol::process::Command;
+use async_pidfd::AsyncPidFd;
+use compio_fs::File;
+use compio_io::{AsyncReadAt, AsyncWriteAt, AsyncWriteAtExt};
 use std::ffi::OsStr;
-use std::{fs::File, path::Path, process::Stdio};
+use std::io;
+use std::process::Command;
+use std::{path::Path, process::Stdio};
 
 pub async fn generate(home: &str) -> anyhow::Result<String> {
     let tempdir = tempfile::tempdir().context("failed to fetch temporary directory")?;
 
-    async fn system_info(file: File) -> anyhow::Result<()> {
-        use futures::io::AsyncWriteExt;
+    async fn system_info(path: &Path, command: &str) -> anyhow::Result<()> {
+        let mut file = File::create(path.join(command))
+            .await
+            .context("failed to create file for system_info")?;
 
         let info = crate::support_info::SupportInfo::fetch().await;
 
@@ -23,18 +28,17 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
             "Kernel Revision: " (info.kernel_revision) "\n"
         };
 
-        let mut file = AsyncFile::from(file);
-
-        file.write_all(data.as_bytes())
+        file.write_all_at(data, 0)
             .await
-            .context("failed to write system info")?;
-
-        dbg!(file.flush().await.context("failed to write system info"))
+            .0
+            .context("failed to write system info")
     }
 
     let temp = tempdir.path();
 
     let _ = futures::join!(
+        command("libinput", &["list-devices"], temp, "libinput"),
+        command("cosmic-randr", &["list", "--kdl"], temp, "cosmic-randr"),
         command("df", &["-h"], temp, "free-disk-space"),
         command("dmesg", &[], temp, "dmesg"),
         command("dmidecode", &[], temp, "dmidecode"),
@@ -57,7 +61,6 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
         command("systemd-analyze", &["blame"], temp, "boot-process-times"),
         command("upower", &["-d"], temp, "upower"),
         command("uptime", &[], temp, "uptime"),
-        command("xinput", &[], temp, "xinput"),
         copy(temp, "/etc/apt/sources.list.d", "apt/sources.list.d"),
         copy(temp, "/etc/apt/sources.list", "apt/sources.list"),
         copy(temp, "/etc/crypttab", "crypttab"),
@@ -77,7 +80,7 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
         ),
         copy(temp, "/var/log/syslog", "syslog.log"),
         copy(temp, "/var/log/Xorg.0.log", "Xorg.0.log"),
-        system_info(tempfile(temp, "systeminfo.txt")?)
+        system_info(temp, "systeminfo.txt")
     );
 
     let files_to_collect: Vec<String> = std::fs::read_dir(temp)
@@ -88,7 +91,7 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
         })
         .unwrap_or_default();
 
-    eprintln!("logs generated: {:?}", files_to_collect);
+    eprintln!("logs generated {:?}", files_to_collect);
 
     let time = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -103,24 +106,30 @@ pub async fn generate(home: &str) -> anyhow::Result<String> {
         .arg("-Jpcf")
         .arg(&log_path)
         .args(&files_to_collect)
-        .status()
+        .spawn()
+        .and_then(|child| AsyncPidFd::from_pid(child.id() as i32))
+        .unwrap()
+        .wait()
         .await
-        .and_then(IntoResult::into_result)
+        .and_then(|info| info.status().into_result())
         .context("tar exited in failure")?;
 
     Ok(log_path)
 }
 
 async fn command(command: &str, args: &[&str], temp: &Path, filename: &str) -> anyhow::Result<()> {
-    eprintln!("fetching output from `{command}`");
+    eprintln!("run `{command}`");
     Command::new(command)
         .args(args)
         .stdin(Stdio::null())
         .stderr(Stdio::null())
         .stdout(tempfile(temp, filename)?)
-        .status()
+        .spawn()
+        .and_then(|child| AsyncPidFd::from_pid(child.id() as i32))
+        .unwrap()
+        .wait()
         .await
-        .and_then(IntoResult::into_result)
+        .and_then(|info| info.status().into_result())
         .with_context(|| format!("{} exited in failure", command))
 }
 
@@ -134,41 +143,33 @@ async fn copy<D: AsRef<OsStr>, S: AsRef<OsStr>>(
         source: S,
         name: D,
     ) -> anyhow::Result<()> {
-        let source = Path::new(source.as_ref());
+        let source = Path::new(source.as_ref()).to_path_buf();
         let dest = tmp.join(name.as_ref());
 
-        eprintln!(
-            "copying logs from {} to {}",
-            source.display(),
-            dest.display()
-        );
+        eprintln!("copying {}", source.display());
 
         if let Some(parent) = dest.parent() {
-            let _ = smol::fs::create_dir_all(&parent).await;
+            let _ = std::fs::create_dir_all(&parent);
         }
 
-        let source = async move {
-            AsyncFile::open(source)
-                .await
-                .context("failed to open source")
-        };
-
-        let dest = async move {
-            AsyncFile::create(&dest)
-                .await
-                .context("failed to create dest")
-        };
-
-        let (mut source, mut dest) = futures::try_join!(source, dest)?;
-        smol::io::copy(&mut source, &mut dest)
+        let mut source = File::open(source)
             .await
-            .context("failed to copy")
-            .map(|_| ())
+            .context("failed to open file for copying")?;
+
+        let mut dest = File::create(dest)
+            .await
+            .context("failed to open file for copying")?;
+
+        fs_copy(&mut source, &mut dest)
+            .await
+            .context("failed to copy file")?;
+
+        Ok(())
     }
 
     let source = Path::new(source.as_ref());
 
-    if source.is_file() {
+    let res = if source.is_file() {
         copy_(tmp, source, name).await
     } else {
         let dest = tmp.join(name.as_ref());
@@ -193,10 +194,42 @@ async fn copy<D: AsRef<OsStr>, S: AsRef<OsStr>>(
         }
 
         Ok(())
-    }
+    };
+
+    eprintln!("COPY DONE");
+
+    res
 }
 
-fn tempfile(path: &Path, command: &str) -> anyhow::Result<File> {
-    File::create(path.join(command))
+fn tempfile(path: &Path, command: &str) -> anyhow::Result<std::fs::File> {
+    std::fs::File::create(path.join(command))
         .with_context(|| format!("failed to create temporary file for {}", command))
+}
+
+async fn fs_copy(reader: &mut File, writer: &mut File) -> io::Result<u64> {
+    let mut buf = Vec::with_capacity(8 * 1024);
+    let mut total = 0u64;
+    let mut pos = 0;
+
+    loop {
+        let res;
+        (res, buf) = reader.read_at(buf, pos).await.into();
+        match res {
+            Ok(0) => break,
+            Ok(read) => {
+                total += read as u64;
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {
+                continue;
+            }
+            Err(e) => return Err(e),
+        }
+        let res;
+        (res, buf) = writer.write_at(buf, pos).await.into();
+        res?;
+        pos = total;
+        buf.clear();
+    }
+
+    Ok(total)
 }
