@@ -6,6 +6,7 @@ Build-Depends:
   debhelper (>=13),
   debhelper-compat (=13),
   cargo,
+  just,
   rustc,
 Standards-Version: 4.3.0
 Homepage: https://github.com/pop-os/support-panel
